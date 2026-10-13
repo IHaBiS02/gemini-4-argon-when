@@ -116,6 +116,10 @@ gemini-4-flash-lite-preview
         <input type="number" id="interval" min="1" step="1" value="30">
       </div>
       <div>
+        <label for="maxTokens">최대 출력 토큰</label>
+        <input type="number" id="maxTokens" min="1" step="1" value="50">
+      </div>
+      <div>
         <label for="prompt">보낼 메시지</label>
         <input type="text" id="prompt" value="hi">
       </div>
@@ -151,11 +155,10 @@ gemini-4-flash-lite-preview
 const $ = id => document.getElementById(id);
 const REQUEST_TIMEOUT_MS = 60000;
 const LOG_MAX_LINES = 500;
-const MAX_OUTPUT_TOKENS = 50;
 const STORE_KEY = 'gemini-waiter-settings';
 
 // ---------- 설정 저장/복원 ----------
-const FIELDS = ['apiKey', 'saJson', 'location', 'models', 'interval', 'prompt'];
+const FIELDS = ['apiKey', 'saJson', 'location', 'models', 'interval', 'maxTokens', 'prompt'];
 
 function applyMode() {
   $('aisBox').hidden = !$('useAis').checked;
@@ -313,7 +316,7 @@ async function probe(cfg, provider, model, signal) {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
-    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: cfg.prompt }] }], generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS } }),
+    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: cfg.prompt }] }], generationConfig: { maxOutputTokens: cfg.maxTokens } }),
     signal,
   });
   const text = await res.text();
@@ -412,6 +415,7 @@ function readConfig() {
     prompt: $('prompt').value || 'hi',
     stopAll: $('stopAll').checked,
     intervalMs: Math.max(1, Number($('interval').value) || 0) * 1000,
+    maxTokens: Math.max(1, Math.floor(Number($('maxTokens').value)) || 50),
     models: [...new Set($('models').value.split('\n').map(s => s.trim().replace(/^models\//, '')).filter(Boolean))],
   };
   if (!cfg.models.length) throw new Error('모델 이름을 하나 이상 입력하세요.');
